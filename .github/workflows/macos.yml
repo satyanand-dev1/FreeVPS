@@ -20,8 +20,8 @@ jobs:
           brew install ngrok/ngrok/ngrok
           ngrok config add-authtoken $NGROK_AUTH_TOKEN
           
-          # 2. Set password for the active 'runner' admin user
-          echo "runner:$MAC_USER_PASSWORD" | sudo chpasswd
+          # 2. Set password for the active 'runner' account on macOS
+          sudo dscl . -passwd /Users/runner "$MAC_USER_PASSWORD"
           
           # 3. Enable macOS Screen Sharing (VNC)
           sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist 2>/dev/null || true
