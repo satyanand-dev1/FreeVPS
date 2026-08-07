@@ -7,8 +7,14 @@ jobs:
   build:
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v2
-      - name: Running macOS
+      - uses: actions/checkout@v3
+      
+      - name: Install and Configure Ngrok
+        run: |
+          brew install ngrok/ngrok/ngrok
+          ngrok config add-authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+          
+      - name: Start macOS Setup
         run: |
           bash macos-run.sh
         env:
