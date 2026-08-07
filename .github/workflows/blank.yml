@@ -1,29 +1,41 @@
 name: Ubuntu ssh Virtual Machine
-on: 
+on:
   workflow_dispatch:
 defaults:
   run:
     shell: bash
-    
-    
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3.5.2
+      - uses: actions/checkout@v3.5.2
 #    - name: If failed, means ok
 #      run: ./not-exist-file.sh it bloke build
-    - name: Preparing Linux Environment
-      run: sudo apt-get update
-    - name: Setting Up the Ubuntu Environment
-    #  if: ${{ failure() }}
-      run: bash linux-ssh.sh
-      env:
-        LINUX_USER_PASSWORD: ${{ secrets.LINUX_USER_PASSWORD }}
-        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-        CHROME_HEADLESS_CODE: ${{ secrets.CHROME_HEADLESS_CODE }}
-        LINUX_MACHINE_NAME: ${{ secrets.LINUX_MACHINE_NAME }}
-        LINUX_USERNAME: ${{ secrets.LINUX_USERNAME }}
-    - name: Keep Running Ubuntu System and keepAlive
-     # if: ${{ failure() }}
-      run: sleep 6h
+      - name: Preparing Linux Environment
+        run: sudo apt-get update
+      - name: Validate required secrets
+        id: validate_secrets
+        run: |
+          if [[ -z "${{ secrets.NGROK_AUTH_TOKEN }}" || -z "${{ secrets.LINUX_USER_PASSWORD }}" || -z "${{ secrets.LINUX_USERNAME }}" ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Setting Up the Ubuntu Environment
+        if: steps.validate_secrets.outputs.ready == 'true'
+      #  if: ${{ failure() }}
+        run: bash linux-ssh.sh
+        env:
+          LINUX_USER_PASSWORD: ${{ secrets.LINUX_USER_PASSWORD }}
+          NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+          CHROME_HEADLESS_CODE: ${{ secrets.CHROME_HEADLESS_CODE }}
+          LINUX_MACHINE_NAME: ${{ secrets.LINUX_MACHINE_NAME }}
+          LINUX_USERNAME: ${{ secrets.LINUX_USERNAME }}
+      - name: Skip setup when required secrets are missing
+        if: steps.validate_secrets.outputs.ready != 'true'
+        run: echo "Skipping Ubuntu SSH setup because one or more required secrets are not configured."
+      - name: Keep Running Ubuntu System and keepAlive
+        if: steps.validate_secrets.outputs.ready == 'true'
+      # if: ${{ failure() }}
+        run: sleep 6h
