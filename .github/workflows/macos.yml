@@ -1,42 +1,18 @@
-name: macOS-VNC
+name: macOS
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-12
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install Dependencies & Setup VNC Remote Desktop
+      - uses: actions/checkout@v2
+      - name: Running macOS
+        run: |
+          bash macos-run.sh
         env:
           NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+          MAC_REALNAME: ${{ secrets.MAC_REALNAME }}
           MAC_USER_PASSWORD: ${{ secrets.MAC_USER_PASSWORD }}
           VNC_PASSWORD: ${{ secrets.VNC_PASSWORD }}
-        run: |
-          # 1. Install and Configure ngrok
-          brew install ngrok/ngrok/ngrok
-          ngrok config add-authtoken $NGROK_AUTH_TOKEN
-          
-          # 2. Set password for the active 'runner' account
-          sudo sysadminctl -resetPasswordFor runner -newPassword "$MAC_USER_PASSWORD"
-          
-          # 3. Enable macOS Screen Sharing (VNC)
-          sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist 2>/dev/null || true
-          
-          # 4. Start ngrok tunnel on VNC Port 5900
-          ngrok tcp 5900 &
-          
-          # 5. Output Connection Details
-          echo "=========================================="
-          echo "macOS VNC Setup Complete!"
-          echo "Username: runner"
-          echo "Password: (Your MAC_USER_PASSWORD)"
-          echo "VNC Password: (Your VNC_PASSWORD)"
-          echo "Check your ngrok dashboard (Endpoints/Tunnels) for your TCP connection URL!"
-          echo "=========================================="
-
-      - name: Keep Alive Session
-        run: sleep 21600
